@@ -255,8 +255,8 @@ function omegaTable(snapshot, prevSnapshot, ev) {
   const hiddenRows = QL.length - rows.length;
   const hiddenCols = alpha.length * QR.length - cols.reduce((n, [, ps]) => n + ps.length, 0);
   if (!rows.length) return `<p class="note">No output entries yet.</p>`;
-  let html = "<table><thead><tr><th rowspan=2>q</th>";
-  for (const [a, ps] of cols) html += `<th colspan=${ps.length}>a = ${esc(a)}</th>`;
+  let html = "<table><thead><tr><th rowspan=2>q \\ a, p</th>";
+  for (const [a, ps] of cols) html += `<th colspan=${ps.length}><b>${esc(a)}</b></th>`;
   html += "</tr><tr>";
   for (const [, ps] of cols) for (const p of ps) html += `<th>p=${p}</th>`;
   html += "</tr></thead><tbody>";
