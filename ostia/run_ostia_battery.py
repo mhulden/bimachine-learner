@@ -6,8 +6,9 @@ Test: the same 500 strings (length <= 25) used for oracle agreement there.
 OSTIA sees whole (concatenated) outputs only; inputs on which the learned
 transducer is undefined count as errors. The paper reports lexicographic order.
 
-Build the learner first:  make -C ostia
-Usage: python3 ostia/run_ostia_battery.py [--order lex|shortlex|both] [--out results/ostia_battery.jsonl]
+Build the C learner first:  make -C ostia
+(or use --impl python for the equivalent, slower, pure-Python ostia.py)
+Usage: python3 ostia/run_ostia_battery.py [--impl c|python] [--order lex|shortlex|both] [--out results/ostia_battery.jsonl]
 """
 import argparse
 import json
@@ -19,6 +20,7 @@ import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BIN = os.path.join(ROOT, "ostia", "ostia")
+PY_IMPL = os.path.join(ROOT, "ostia", "ostia.py")
 sys.path.insert(0, ROOT)
 import rpni_bimachine  # noqa: E402
 
@@ -45,6 +47,8 @@ def write_examples(path, words, f):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--order", choices=["lex", "shortlex", "both"], default="lex")
+    ap.add_argument("--impl", choices=["c", "python"], default="c",
+                    help="c (build with `make -C ostia`) or the equivalent pure-Python ostia.py")
     ap.add_argument("--tasks", nargs="*", default=TASKS)
     ap.add_argument("--n_train", type=int, default=2000)
     ap.add_argument("--max_len_train", type=int, default=12)
@@ -73,7 +77,8 @@ def main():
             write_examples(trp, train, f)
             write_examples(tep, test, f)
             for order in orders:
-                cmd = [BIN] + (["-s"] if order == "shortlex" else []) + [trp, tep]
+                learner = [BIN] if args.impl == "c" else [sys.executable, PY_IMPL]
+                cmd = learner + (["-s"] if order == "shortlex" else []) + [trp, tep]
                 res = subprocess.run(cmd, capture_output=True, text=True)
                 if res.returncode != 0:
                     raise SystemExit(f"{task} {order}: {res.stderr or res.stdout}")
