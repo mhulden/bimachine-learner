@@ -1,0 +1,2 @@
+matplotlib>=3.5        # plot_random_targets.py only
+# Optional, for rpni_bimachine.py --view: the `graphviz` Python package and the Graphviz `dot` binary.
