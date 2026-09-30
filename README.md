@@ -6,6 +6,12 @@ Code and data for the paper
 
 A bimachine computes a functional string transduction with a left-to-right DFA, a right-to-left DFA, and a local output table ω(q, a, p) that emits one output chunk per input position. This repository contains an RPNI-style learner that recovers all three from *aligned* examples, meaning input strings paired with one output chunk per input symbol (chunks may be empty or longer than one symbol, so deletions and anchored insertions are supported). It also contains the scripts that reproduce every table and the random-target figure in the paper.
 
+**Interactive demo**
+
+<a href="https://mhulden.github.io/bimachine-learning-jsdemo/">
+  <img src="interactive-demo.png" alt="Interactive JavaScript demo" width="604">
+</a>
+
 ## Contents
 
 | File | What it is | Paper |
