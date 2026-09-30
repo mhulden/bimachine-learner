@@ -12,7 +12,7 @@ A bimachine computes a functional string transduction with a left-to-right DFA, 
 |---|---|---|
 | `rpni_bimachine.py` | The learner (library and command-line tool) and the ten benchmark chunk oracles | §3, §4.1 |
 | `run_battery.py` | Oracle-assisted benchmark battery | Table 1 |
-| `ostia/ostia.c`, `ostia/run_ostia_battery.py` | OSTIA baseline in C and its driver | Table 2 |
+| `ostia/ostia.py`, `ostia/ostia.c`, `ostia/run_ostia_battery.py` | OSTIA baseline: a readable Python version, an equivalent fast C version, and the driver | Table 2 |
 | `random_targets.py` | Sample-only learning on random target bimachines | Table 3, §4.4 |
 | `plot_random_targets.py` | Plot of the random-target results | Figure 3 |
 | `results/` | Outputs of the scripts above, as used in the paper | |
@@ -36,14 +36,17 @@ python3 run_battery.py
 
 It prints |Q_L|, |Q_R|, |ω|, test-set chunk accuracy and oracle agreement for each task, and writes `results/battery.jsonl`. Settings: 2,000 training strings of length ≤ 12 (seed 0), witness budget k = 80, continuation and head length ≤ 3, at most 10 merge rounds, three alternating minimization iterations. Agreement is exact chunk-sequence agreement on 500 random strings of length ≤ 25.
 
-**Table 2: OSTIA baseline** (about 1 second)
+**Table 2: OSTIA baseline** (seconds)
 
 ```bash
 make -C ostia
-python3 ostia/run_ostia_battery.py
+python3 ostia/run_ostia_battery.py                  # C learner (about 0.2 s)
+python3 ostia/run_ostia_battery.py --impl python    # same results, pure Python (about 2 s)
 ```
 
 It writes `results/ostia_battery.jsonl`. OSTIA receives the same training and test inputs as Table 1, but only whole (concatenated) outputs, not chunks. States are merged in lexicographic order of their access strings; `--order shortlex` or `--order both` runs the length-first order as well. Inputs on which the learned transducer is undefined count as errors.
+
+`ostia/ostia.py` is the version to read: it documents the algorithm and mirrors the C code step for step. Both learn the same transducers on the battery and on 300 small random subsequential targets. Each can also be run directly on tab-separated `INPUT<TAB>OUTPUT` files: `python3 ostia/ostia.py [-s] TRAIN TEST`.
 
 **Table 3, Figure 3 and the fallback/coverage figures in §4.4** (about 1 minute)
 
