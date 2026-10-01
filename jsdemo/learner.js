@@ -584,6 +584,7 @@ export function learnBimachine({
   maxRounds = 10,
   minIters = 3,
   maxEvents = 5000,
+  maxMillis = Infinity, // also stop after this much computing time
   record = true,   // false: keep only event kinds, without snapshots (fast; for tests)
 }) {
   const alpha = [...alphabet].sort();
@@ -592,16 +593,34 @@ export function learnBimachine({
   let red = { L: [], R: [] };
   let blue = { L: [], R: [] };
 
-  const snap = () => (hypo ? hypo.toJSON() : null);
+  // Steps that only inspect the hypothesis (picks, rejected merges, promotions)
+  // share the snapshot of the previous step, so memory grows with the number of
+  // changes rather than the number of steps.
+  const UNCHANGED = new Set(["round", "pick", "reject-fold", "reject-data", "reject-witness", "accept", "promote", "pass-end", "converged"]);
+  let cachedSnap = null;
+  let cachedFor = null;
+  const snap = (kind) => {
+    if (!hypo) return null;
+    if (UNCHANGED.has(kind) && cachedFor === hypo && cachedSnap) return cachedSnap;
+    cachedSnap = hypo.toJSON();
+    cachedFor = hypo;
+    return cachedSnap;
+  };
+  const started = Date.now();
+  let stopReason = null;
   const emit = (ev) => {
-    if (events.length >= maxEvents && ev.kind !== "stopped") throw new StepLimit();
+    if (ev.kind !== "stopped") {
+      if (events.length >= maxEvents) stopReason = `the demo's limit of ${maxEvents.toLocaleString("en-US")} steps`;
+      else if (Date.now() - started > maxMillis) stopReason = `${Math.round(maxMillis / 1000)} seconds of computing (${events.length.toLocaleString("en-US")} steps)`;
+      if (stopReason) throw new StepLimit();
+    }
     if (!record) {
       events.push({ kind: ev.kind });
       return;
     }
     events.push({
       ...ev,
-      snapshot: ev.snapshot || snap(),
+      snapshot: ev.snapshot || snap(ev.kind),
       red: { L: [...red.L], R: [...red.R] },
       blue: { L: [...blue.L], R: [...blue.R] },
       queryCount: oracle.log.length,
@@ -755,7 +774,7 @@ export function learnBimachine({
     if (!(err instanceof StepLimit)) throw err;
     emit({
       kind: "stopped",
-      text: `Stopped after ${maxEvents} steps. With this sample and witness budget the witness paths added by each merge keep creating new states to merge, so the run would take very long. Try fewer or longer training strings, or a smaller witness budget.`,
+      text: `Stopped after ${stopReason}. Runs this long usually mean that the witness paths added by each merge keep creating new states to merge. Try a different sample or witness budget.`,
     });
     return { hypothesis: hypo, events, merges: mergeRecord, queries: [...oracle.log], minSteps, stopped: true };
   }

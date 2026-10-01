@@ -27,7 +27,7 @@ Each step shows:
 
 Controls: the step buttons, the slider, ← / → and the space bar. `#step=N` in the URL opens the walkthrough at step N, and `#custom=TASK` (for example `#custom=local_cad_abcd`) opens a random sample for a task.
 
-Small samples with a large witness budget can make the learner run for a very long time. Each accepted merge adds its witness strings as new paths, and those can keep producing new states to merge. The Python learner behaves the same way. The demo stops after 1,500 steps and lets you browse what happened up to that point.
+Small samples with a large witness budget can make the learner run for a very long time. Each accepted merge adds its witness strings as new paths, and those can keep producing new states to merge. The Python learner behaves the same way. The demo stops after 20,000 steps or 10 seconds of computing, whichever comes first, and lets you browse what happened up to that point.
 
 ## Relation to the Python learner
 

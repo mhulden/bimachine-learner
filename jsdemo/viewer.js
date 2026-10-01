@@ -5,6 +5,8 @@ const $ = (id) => document.getElementById(id);
 const SVGNS = "http://www.w3.org/2000/svg";
 const RING_COLORS = ["#eb6834", "#1baf7a", "#4a3aa7", "#e8a800", "#e87ba4", "#008300", "#2a78d6", "#8a4b2a"];
 
+const MAX_STEPS = 20000;
+const MAX_MILLIS = 10000;
 let run = null;        // {events, alphabet, oracle, guided}
 let step = 0;
 let timer = null;
@@ -80,7 +82,7 @@ function startRun({ oracleKey, oracleSource, train, k, len, guided }) {
   const bad = train.find((w) => [...w].some((c) => !alphabet.includes(c)));
   if (bad !== undefined) throw new Error(`"${bad}" uses a symbol outside the alphabet {${alphabet.join(", ")}}`);
   const oracle = new Oracle(fn);
-  const res = learnBimachine({ alphabet, train, oracle, kWitness: k, contMaxLen: len, headMaxLen: len, maxEvents: 1500 });
+  const res = learnBimachine({ alphabet, train, oracle, kWitness: k, contMaxLen: len, headMaxLen: len, maxEvents: MAX_STEPS, maxMillis: MAX_MILLIS });
   const seen = new Set();
   for (const ev of res.events) {
     ev.firstOfKind = !seen.has(ev.kind);
@@ -525,19 +527,28 @@ function custom() {
 }
 
 function runCustom() {
-  try {
-    showError("");
-    startRun({
-      oracleKey: $("c-preset").value,
-      oracleSource: $("c-oracle").value,
-      train: parseTrain($("c-train").value),
-      k: Number($("c-k").value),
-      len: Number($("c-len").value),
-      guided: false,
-    });
-  } catch (err) {
-    showError(err.message || String(err));
-  }
+  showError("");
+  const button = $("c-run");
+  button.disabled = true;
+  button.textContent = "Learning…";
+  // Let the browser repaint before the (possibly long) synchronous run.
+  setTimeout(() => {
+    try {
+      startRun({
+        oracleKey: $("c-preset").value,
+        oracleSource: $("c-oracle").value,
+        train: parseTrain($("c-train").value),
+        k: Number($("c-k").value),
+        len: Number($("c-len").value),
+        guided: false,
+      });
+    } catch (err) {
+      showError(err.message || String(err));
+    } finally {
+      button.disabled = false;
+      button.textContent = "Learn";
+    }
+  }, 30);
 }
 
 const sel = $("c-preset");
