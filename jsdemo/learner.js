@@ -394,21 +394,28 @@ function augment(hypo, examples) {
 // Witness strings: wrap(w) for non-empty w with |w| <= maxLen, shortlex order,
 // skipping training strings, at most k.
 function witnessStrings(wrap, alpha, trainSet, k, maxLen) {
-  const cands = [];
-  let layer = [""];
-  for (let L = 1; L <= maxLen; L++) {
-    const next = [];
-    for (const w of layer) for (const a of alpha) next.push(w + a);
-    cands.push(...next);
-    layer = next;
-  }
   const out = [];
-  for (const w of cands) {
+  for (const w of shortlexWords(alpha, maxLen)) {
     if (out.length >= k) break;
     const x = wrap(w);
     if (!trainSet.has(x) && !out.includes(x)) out.push(x);
   }
   return out;
+}
+
+// Non-empty words of length <= maxLen in shortlex order, generated lazily so
+// that only as many candidates as needed are ever built.
+function* shortlexWords(alpha, maxLen) {
+  for (let L = 1; L <= maxLen; L++) {
+    const idx = new Array(L).fill(0);
+    for (;;) {
+      yield idx.map((i) => alpha[i]).join("");
+      let pos = L - 1;
+      while (pos >= 0 && idx[pos] === alpha.length - 1) idx[pos--] = 0;
+      if (pos < 0) break;
+      idx[pos]++;
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
